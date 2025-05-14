@@ -9,6 +9,7 @@ object ApiNinjasClient {
     val service: ApiNinjasService by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
+            .client(HttpClientProvider.okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(ApiNinjasService::class.java)

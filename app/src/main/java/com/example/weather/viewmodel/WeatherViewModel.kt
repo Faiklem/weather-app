@@ -1,25 +1,49 @@
 package com.example.weather.viewmodel
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.*
-import com.example.weather.network.WeatherResponse
+import com.example.weather.network.DailyWeatherResponse
 import com.example.weather.repository.WeatherRepository
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() {
-
-    private val _weatherResponse = MutableLiveData<WeatherResponse?>()
-    val weatherResponse: LiveData<WeatherResponse?> get() = _weatherResponse
+    private val _dailyResponse = MutableLiveData<DailyWeatherResponse?>()
+    val dailyResponse: LiveData<DailyWeatherResponse?> = _dailyResponse
 
     private val _error = MutableLiveData<String?>()
-    val error: LiveData<String?> get() = _error
+    val error: LiveData<String?> = _error
 
-    fun loadWeather(cityName: String) {
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun loadDaily(city: String, date: LocalDate) {
         viewModelScope.launch {
+            _dailyResponse.value = null
+            _error.value = null
+
             try {
-                val coordinates = repository.getCityCoordinates(cityName)
-                if (coordinates != null) {
-                    val forecast = repository.getWeatherForecast(coordinates.first, coordinates.second)
-                    _weatherResponse.value = forecast
+                val coords = repository.getCityCoordinates(city)
+                if (coords != null) {
+                    _dailyResponse.value = repository.getDailyForecast(coords.first, coords.second, date)
+                } else {
+                    _error.value = "Город не найден"
+                }
+            } catch (e: Exception) {
+                _error.value = e.message
+            }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun loadWeekly(city: String) {
+        viewModelScope.launch {
+            _dailyResponse.value = null
+            _error.value = null
+
+            try {
+                val coords = repository.getCityCoordinates(city)
+                if (coords != null) {
+                    _dailyResponse.value = repository.getWeeklyForecast(coords.first, coords.second)
                 } else {
                     _error.value = "Город не найден"
                 }
@@ -32,7 +56,7 @@ class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() 
 
 @Suppress("UNCHECKED_CAST")
 class WeatherViewModelFactory(private val repository: WeatherRepository) : ViewModelProvider.Factory {
-    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(WeatherViewModel::class.java)) {
             return WeatherViewModel(repository) as T
         }
