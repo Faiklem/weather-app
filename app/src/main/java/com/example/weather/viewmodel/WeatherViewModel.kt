@@ -12,12 +12,16 @@ class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() 
     private val _dailyResponse = MutableLiveData<DailyWeatherResponse?>()
     val dailyResponse: LiveData<DailyWeatherResponse?> = _dailyResponse
 
+    private val _isLoading = MutableLiveData(false)
+    val isLoading: LiveData<Boolean> = _isLoading
+
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> = _error
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun loadDaily(city: String, date: LocalDate) {
         viewModelScope.launch {
+            _isLoading.value = true
             _dailyResponse.value = null
             _error.value = null
 
@@ -30,6 +34,8 @@ class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() 
                 }
             } catch (e: Exception) {
                 _error.value = e.message
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -37,6 +43,7 @@ class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() 
     @RequiresApi(Build.VERSION_CODES.O)
     fun loadWeekly(city: String) {
         viewModelScope.launch {
+            _isLoading.value = true
             _dailyResponse.value = null
             _error.value = null
 
@@ -49,17 +56,9 @@ class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() 
                 }
             } catch (e: Exception) {
                 _error.value = e.message
+            } finally {
+                _isLoading.value = false
             }
         }
-    }
-}
-
-@Suppress("UNCHECKED_CAST")
-class WeatherViewModelFactory(private val repository: WeatherRepository) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(WeatherViewModel::class.java)) {
-            return WeatherViewModel(repository) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
