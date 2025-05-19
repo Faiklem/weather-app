@@ -5,6 +5,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -13,6 +14,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.weather.ui.components.ForecastCard
@@ -28,6 +30,7 @@ fun WeatherAppScreen(viewModel: WeatherViewModel) {
     var localError by remember { mutableStateOf<String?>(null) }
 
     val dailyResp by viewModel.dailyResponse.observeAsState()
+    val isLoading by viewModel.isLoading.observeAsState(false)
     val vmError by viewModel.error.observeAsState()
 
     Scaffold(
@@ -100,7 +103,22 @@ fun WeatherAppScreen(viewModel: WeatherViewModel) {
                 )
             }
 
-            if (errorMessage == null && dailyResp != null) {
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(text = "Загрузка...")
+                    }
+                }
+            }
+            else if (errorMessage == null && dailyResp != null) {
                 val resp = dailyResp!!
                 if (resp.daily.time.size == 1) {
                     val date = LocalDate.parse(resp.daily.time[0])
